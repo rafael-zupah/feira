@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4f1e8">
-  <meta name="description" content="Descubra qual personagem você seria — Feira Cultural">
-  <title>Qual personagem você seria? — Feira Cultural</title>
+  <meta name="description" content="Feira Cultural Instituto Americana — como a IA está revolucionando o nosso dia. Descubra qual personagem você seria.">
+  <title>Qual personagem você seria? — Feira Cultural Instituto Americana</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,6 +42,15 @@
       font-size: .72rem;
       font-weight: 700;
       text-transform: uppercase;
+    }
+
+    /* O tema do evento é uma frase inteira, não um rótulo: em caixa alta e com
+       muito espaçamento entre letras ele ficaria pesado e ruim de ler. */
+    .eyebrow.tema {
+      text-transform: none;
+      letter-spacing: .01em;
+      font-size: .9rem;
+      line-height: 1.35;
     }
 
     .panel {
@@ -128,6 +137,11 @@
     .btn-acao:hover:not(:disabled) { background: #d8513a; color: #fff; }
     .btn-acao:disabled { opacity: .5; }
 
+    /* Verde do WhatsApp: o botão de compartilhar é a ação que espalha o evento,
+       então ele se distingue das outras sem precisar de explicação. */
+    .btn-zap { background: #25d366; }
+    .btn-zap:hover:not(:disabled) { background: #1da851; color: #fff; }
+
     .btn-suave {
       background: rgba(255, 255, 255, .7);
       color: var(--ink);
@@ -180,8 +194,8 @@
 <main class="shell container py-4">
 
   <header class="mb-4">
-    <div class="brand fs-5">FEIRA CULTURAL <span style="color:var(--coral)">/</span> PERSONAGENS</div>
-    <p class="eyebrow mb-2 mt-3">Traga a sua foto</p>
+    <div class="brand fs-5">FEIRA CULTURAL <span style="color:var(--coral)">/</span> INSTITUTO AMERICANA</div>
+    <p class="eyebrow tema mb-2 mt-3">Como a IA está revolucionando o nosso dia</p>
     <h1 class="display-font h3 mb-0">Qual personagem você seria?</h1>
   </header>
 
@@ -251,8 +265,12 @@
       <p class="eyebrow mb-2">Ficou pronto</p>
       <h2 class="display-font h4 mb-3" id="titulo-resultado">Olha você aí!</h2>
       <img class="resultado-img mb-3" id="imagem-resultado" alt="Seu personagem estilizado">
+      <button class="btn-acao btn-zap d-block w-100 mb-2" id="btn-compartilhar">💬 Compartilhar no WhatsApp</button>
+      <p class="aviso mb-2 text-center" id="aviso-compartilhar" hidden>
+        Neste navegador a imagem não vai junto. Baixe abaixo e anexe na conversa.
+      </p>
       <a class="btn-acao d-block text-center text-decoration-none mb-2" id="btn-baixar"
-         download="meu-personagem.png">⬇️ Baixar a imagem</a>
+         download>⬇️ Baixar a imagem</a>
       <button class="btn-suave w-100" id="btn-refazer">Fazer outro personagem</button>
       <p class="aviso mt-3 mb-0">No iPhone, se o botão de baixar não funcionar, toque e
         segure a imagem acima e escolha “Salvar em Fotos”.</p>
@@ -269,7 +287,7 @@
   </section>
 
   <footer class="text-center mt-4">
-    <p class="aviso mb-0">Protótipo da feira cultural · nenhuma foto é armazenada</p>
+    <p class="aviso mb-0">Feira Cultural Instituto Americana · nenhuma foto é armazenada</p>
   </footer>
 
 </main>

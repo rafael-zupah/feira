@@ -292,28 +292,11 @@ async function desenhar(env, { nome, profissao, estilo, b64, mime, sinal }) {
 
   if (!resposta.ok) {
     const detalhe = await resposta.text();
-    console.error("Gemini falhou:", resposta.status, detalhe.slice(0, 800));
-
-    if (resposta.status === 429) {
-      throw new ErroAmigavel(
-        "Muita gente gerando ao mesmo tempo. Espere um minutinho e tente de novo.",
-        429,
-      );
-    }
-    if (resposta.status === 401 || resposta.status === 403) {
-      throw new ErroAmigavel(
-        "A chave do Gemini parece inválida, ou a conta está sem cobrança ativa. " +
-          "Confira o GEMINI_API_KEY e o billing do projeto no Google.",
-        500,
-      );
-    }
-    if (resposta.status === 404) {
-      throw new ErroAmigavel(
-        `O modelo "${MODELO_IMAGEM}" não foi encontrado. Atualize MODELO_IMAGEM no worker.`,
-        500,
-      );
-    }
-    throw new ErroAmigavel("Não consegui desenhar o seu personagem agora. Tente de novo.", 502);
+    const falha = traduzirErro(resposta.status, detalhe);
+    console.error(
+      `Gemini falhou: HTTP ${resposta.status} | motivo: ${falha.motivo ?? "?"} | ${detalhe.slice(0, 600)}`,
+    );
+    throw new ErroAmigavel(falha.mensagem, falha.status);
   }
 
   const retorno = await resposta.json();
@@ -366,6 +349,92 @@ async function desenhar(env, { nome, profissao, estilo, b64, mime, sinal }) {
     );
   }
   throw new ErroAmigavel("O desenho não saiu. Tente de novo.", 502);
+}
+
+/**
+ * Traduz o erro do Google para uma frase que sirva para alguma coisa.
+ *
+ * A versão anterior dizia "a chave parece inválida" para qualquer 401 ou 403.
+ * Só que por trás de um 403 há três problemas bem diferentes — chave recusada,
+ * API não habilitada no projeto, ou conta sem permissão — e cada um se resolve
+ * num lugar distinto. A frase genérica mandava procurar no lugar errado.
+ *
+ * O motivo real vem no corpo da resposta, em error.details[].reason; o status
+ * HTTP sozinho não distingue os casos.
+ */
+function traduzirErro(statusHttp, corpo) {
+  let status = null;
+  let motivo = null;
+  try {
+    const erro = JSON.parse(corpo)?.error;
+    status = erro?.status ?? null;
+    motivo = (erro?.details ?? []).find((d) => typeof d?.reason === "string")?.reason ?? null;
+  } catch {
+    // O corpo não era JSON; resta só o status HTTP.
+  }
+
+  // 429 vem antes de tudo porque é o erro mais provável numa fila de estande.
+  //
+  // Não dá para separar com segurança "projeto sem cota para imagem" de "gente
+  // demais agora": nos dois casos o Google responde 429 com o mesmo status
+  // RESOURCE_EXHAUSTED e a mesma frase ("you exceeded your current quota...
+  // check your plan and billing details"). Tentar adivinhar pelo texto já deu
+  // errado uma vez aqui. Então a mensagem nomeia as duas possibilidades e diz
+  // como distingui-las, em vez de escolher uma e mandar procurar no lugar errado.
+  if (statusHttp === 429) {
+    return {
+      motivo,
+      status: 429,
+      mensagem:
+        "O Google recusou por limite de uso. Se isto aparecer já no primeiro teste do dia, confira a cobrança do projeto; se for no meio da fila, é gente demais ao mesmo tempo.",
+    };
+  }
+
+  if (motivo === "API_KEY_INVALID") {
+    return {
+      motivo,
+      status: 500,
+      mensagem:
+        "O Google recusou a chave do Gemini. Confira se ela foi copiada inteira, sem espaço sobrando, no .env do servidor.",
+    };
+  }
+  if (motivo === "SERVICE_DISABLED" || status === "SERVICE_DISABLED") {
+    return {
+      motivo,
+      status: 500,
+      mensagem:
+        'A API do Gemini não está habilitada no projeto desta chave. Habilite a "Generative Language API" no Google Cloud Console.',
+    };
+  }
+  if (motivo === "BILLING_DISABLED" || /billing/i.test(corpo)) {
+    return {
+      motivo,
+      status: 500,
+      mensagem:
+        "O projeto desta chave está sem cobrança ativa. A geração de imagem é paga e não tem cota gratuita.",
+    };
+  }
+  if (statusHttp === 401 || statusHttp === 403) {
+    return {
+      motivo,
+      status: 500,
+      mensagem:
+        "A chave foi aceita, mas este projeto não pode gerar imagens. Confira a cobrança ativa e as permissões da conta de serviço.",
+    };
+  }
+  if (statusHttp === 404) {
+    return {
+      motivo,
+      status: 500,
+      mensagem: `O modelo "${MODELO_IMAGEM}" não foi encontrado. Atualize MODELO_IMAGEM no worker.`,
+    };
+  }
+
+  return {
+    motivo,
+    status: 502,
+    mensagem: "Não consegui desenhar o seu personagem agora. Tente de novo.",
+  };
 }
 
 /** Motivos de término em que o modelo se recusou a desenhar. */

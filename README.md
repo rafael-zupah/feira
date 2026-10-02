@@ -1,8 +1,9 @@
-# Feira Cultural — Gerador de Personagens
+# Feira Cultural Instituto Americana — Gerador de Personagens
 
-Webapp de estande de feira cultural. O visitante abre um link pelo QR code, informa
-nome e profissão, escolhe um estilo, manda uma selfie e recebe uma imagem dele mesmo
-caracterizado — gerada por IA.
+Webapp de estande da Feira Cultural Instituto Americana — *como a IA está revolucionando
+o nosso dia*. O visitante abre um link pelo QR code, informa nome e profissão, escolhe um
+estilo, tira uma selfie e recebe uma imagem dele mesmo caracterizado — gerada por IA.
+Depois pode compartilhar o resultado no WhatsApp.
 
 ## Como funciona
 
@@ -305,6 +306,14 @@ mesma; o que muda é quem serve a página.
 - O botão "Tirar foto" usa `capture="user"`, que abre a câmera frontal direto no celular,
   sem passar pela galeria. **Em computador o atributo é ignorado** e o navegador abre o
   seletor de arquivos — é assim que dá para testar o app no PC.
+- O compartilhamento usa a **Web Share API com arquivo** (`navigator.share({files})`).
+  Isso importa: um link `wa.me` sozinho carrega **apenas texto** e nunca anexa a imagem.
+  Onde não há suporte (computador, navegador antigo), o app cai para o `wa.me` com a
+  legenda e avisa na tela que a imagem precisa ser anexada na mão.
+  Vale saber que **o WhatsApp costuma descartar o texto quando recebe um arquivo** — a
+  legenda aparece ou não dependendo da versão do app. A imagem em si sempre vai.
+- A extensão do arquivo baixado vem do `mimeType` que o servidor devolveu. Fixar `.png`
+  no código, como era antes, gerava um arquivo `.png` que por dentro era JPEG.
 - Uma imagem 1K consome ~1.120 tokens de saída. O `maxOutputTokens` é 8192; um valor
   baixo como 512 faria toda geração voltar cortada e sem imagem.
 - O app nunca envia `imageConfig`. A documentação do Google está em transição e há

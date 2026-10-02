@@ -46,7 +46,13 @@ const mensagemErro = document.getElementById("mensagem-erro");
 // --- estado ----------------------------------------------------------------
 /** Data URL da foto já reduzida, pronta para enviar. */
 let fotoReduzida = null;
-let nomeArquivo = "meu-personagem.png";
+
+/**
+ * A legenda que vai junto da imagem compartilhada.
+ * É também a assinatura do evento, por isso vive numa constante só.
+ */
+const MENSAGEM_COMPARTILHAR =
+  "Feira Cultural Instituto Americana, como a IA está revolucionando o nosso dia.";
 
 // --- telas -----------------------------------------------------------------
 function mostrarTela(tela) {
@@ -110,10 +116,6 @@ async function receberFoto(arquivo) {
     previa.src = fotoReduzida;
     previa.hidden = false;
     molduraVazio.hidden = true;
-    nomeArquivo = `personagem-${(campoNome.value.trim() || "feira")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")}.png`;
     atualizarBotao();
   } catch (falha) {
     console.error(falha);
@@ -191,7 +193,10 @@ async function gerar() {
     progresso.style.width = "100%";
     imagemResultado.src = dados.imagem;
     btnBaixar.href = dados.imagem;
-    btnBaixar.download = nomeArquivo;
+    // A extensão sai do tipo que o servidor devolveu, não de um palpite. Fixar
+    // ".png", como era antes, gerava um arquivo .png que por dentro era JPEG.
+    btnBaixar.download = nomeDoArquivo(dados.imagem);
+    avisoCompartilhar.hidden = true;
     tituloResultado.textContent = campoNome.value.trim()
       ? `${campoNome.value.trim()}, olha você aí!`
       : "Olha você aí!";
@@ -247,6 +252,72 @@ function animarEspera() {
 function falhar(mensagem) {
   mensagemErro.textContent = mensagem || "Algo deu errado. Tente de novo.";
   mostrarTela(telaErro);
+}
+
+/**
+ * Nome do arquivo para baixar, com a extensão certa.
+ * O servidor devolve image/jpeg ou image/png conforme o modelo, então a
+ * extensão vem da própria resposta.
+ */
+function nomeDoArquivo(dataUrl) {
+  const tipo = (dataUrl.match(/^data:([^;]+);/) ?? [])[1] ?? "image/jpeg";
+  const extensao = { "image/png": "png", "image/webp": "webp" }[tipo] ?? "jpg";
+  const apelido = (campoNome.value.trim() || "feira")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return `personagem-${apelido || "feira"}.${extensao}`;
+}
+
+// --- compartilhar ----------------------------------------------------------
+const btnCompartilhar = document.getElementById("btn-compartilhar");
+const avisoCompartilhar = document.getElementById("aviso-compartilhar");
+
+btnCompartilhar.addEventListener("click", async () => {
+  const blob = dataUrlParaBlob(imagemResultado.src);
+  if (!blob) return;
+
+  const arquivo = new File([blob], nomeDoArquivo(imagemResultado.src), { type: blob.type });
+
+  // navigator.share com arquivo é o único caminho que anexa a imagem de fato:
+  // o link wa.me, sozinho, carrega apenas texto. Como o celular é o aparelho do
+  // estande, este é o caminho normal — e a folha que abre deixa a pessoa
+  // escolher o WhatsApp.
+  if (navigator.canShare?.({ files: [arquivo] })) {
+    try {
+      await navigator.share({ files: [arquivo], text: MENSAGEM_COMPARTILHAR });
+    } catch (falha) {
+      // AbortError é a pessoa fechando a folha sem escolher nada. Não é erro.
+      if (falha?.name !== "AbortError") console.error(falha);
+    }
+    return;
+  }
+
+  // Computador e navegadores antigos não sabem compartilhar arquivo. Aqui abre
+  // o WhatsApp já com a legenda, e a pessoa anexa a imagem na conversa.
+  window.open(
+    `https://wa.me/?text=${encodeURIComponent(MENSAGEM_COMPARTILHAR)}`,
+    "_blank",
+    "noopener",
+  );
+  avisoCompartilhar.hidden = false;
+});
+
+/**
+ * Converte um data URL em Blob.
+ *
+ * Tudo aqui é síncrono de propósito: o navegador só permite abrir a folha de
+ * compartilhamento enquanto o toque ainda está "ativo", e um await no meio
+ * desta conversão consumiria esse direito — a folha simplesmente não abriria.
+ */
+function dataUrlParaBlob(dataUrl) {
+  const partes = dataUrl.match(/^data:([^;]+);base64,(.+)$/s);
+  if (!partes) return null;
+  const [, tipo, b64] = partes;
+  const binario = atob(b64);
+  const bytes = new Uint8Array(binario.length);
+  for (let i = 0; i < binario.length; i += 1) bytes[i] = binario.charCodeAt(i);
+  return new Blob([bytes], { type: tipo });
 }
 
 // --- voltar -----------------------------------------------------------------
