@@ -10,7 +10,7 @@ Depois pode compartilhar o resultado no WhatsApp.
 Tudo acontece numa chamada só:
 
 ```
-selfie + estilo ──▶ gemini-3.1-flash-image ──▶ imagem do personagem
+selfie + estilo ──▶ gemini-3.1-flash-lite-image ──▶ imagem do personagem
 ```
 
 O modelo **lê a foto e desenha**, no mesmo passo. Como ele vê o rosto de verdade, o
@@ -24,8 +24,8 @@ memória enquanto aquela requisição é atendida.
 
 ## Quanto custa — leia isto antes de qualquer coisa
 
-**US$ 0,067 por imagem gerada** (1K). Esta é a mudança mais importante em relação à
-versão anterior deste README, que dizia que nada custava dinheiro:
+**US$ 0,0336 por imagem gerada.** Esta é a mudança mais importante em relação à versão
+anterior deste README, que dizia que nada custava dinheiro:
 
 - **Não existe cota gratuita.** A geração de imagem saiu do tier grátis do Google em
   dezembro de 2025. A página oficial de preços marca "Not available" na coluna de
@@ -37,20 +37,44 @@ versão anterior deste README, que dizia que nada custava dinheiro:
   *seu* projeto em [aistudio.google.com](https://aistudio.google.com) → *Usage*, porque
   as cotas mudam e variam por conta.
 
-Para dimensionar: **300 imagens ≈ US$ 20**. Um dia de feira costuma ficar nessa faixa.
+Para dimensionar: **300 imagens ≈ US$ 10**. Um dia de feira costuma ficar nessa faixa.
 
 Contas de referência:
 
 | Cenário | Imagens | Custo |
 |---|---|---|
-| Feira de uma tarde | ~150 | ~US$ 10 |
-| Feira o dia inteiro | ~300 | ~US$ 20 |
-| Link vazado, dia inteiro | ~1.000 (teto da cota) | ~US$ 67 |
+| Feira de uma tarde | ~150 | ~US$ 5 |
+| Feira o dia inteiro | ~300 | ~US$ 10 |
+| Link vazado, dia inteiro | ~1.000 (teto da cota) | ~US$ 34 |
 
 > O app tem um limite de **5 gerações por pessoa a cada 10 minutos**, em memória, para
 > uma pessoa sozinha não queimar o orçamento. Ele **não** é um teto diário: não existe
 > trava de gasto total no código. Se quiser um teto rígido, configure um orçamento no
 > Google Cloud (Faturamento → Orçamentos e alertas).
+
+### Por que o modelo Lite, e como trocar
+
+O `gemini-3.1-flash-lite-image` custa **metade** do `gemini-3.1-flash-image` (US$ 0,0336
+contra US$ 0,067) e é da mesma família, então a semelhança com a pessoa se mantém. A
+troca é uma linha: `MODELO_IMAGEM`, no topo de `src/worker.js`.
+
+| Modelo | Preço | 300 imagens |
+|---|---|---|
+| **`gemini-3.1-flash-lite-image`** (atual) | **US$ 0,0336** | **US$ 10,08** |
+| `gemini-3.1-flash-image` em 0.5K | US$ 0,045 | US$ 13,50 |
+| `gemini-3.1-flash-image` em 1K | US$ 0,067 | US$ 20,10 |
+| `gemini-3-pro-image` | US$ 0,134 | US$ 40,20 |
+
+Duas coisas que **não** valem a pena aqui, apesar de parecerem economia:
+
+- **Modelos de US$ 0,01** (como o `gpt-image-1`) são baratíssimos mas **não mantêm a
+  identidade** da pessoa. Pagar pouco por uma imagem que não é o visitante é pior do
+  que não ter o app: a graça inteira é ele se reconhecer.
+- **A Batch API do Google custa metade** (US$ 0,0168 no Lite), mas é assíncrona, com
+  entrega em horas. Não serve para uma fila ao vivo.
+
+O Lite **só gera em 1K** — não tem 0.5K, 2K nem 4K. Se um dia a economia apertar mais,
+o caminho é voltar ao `gemini-3.1-flash-image` em 0.5K, que fica entre os dois.
 
 ## O que você precisa
 
@@ -115,7 +139,7 @@ escondido dentro do PM2. Deve imprimir:
 
 ```
 Feira no ar em http://127.0.0.1:8090
-Modelo de imagem: gemini-3.1-flash-image (US$ 0,067 por imagem)
+Modelo de imagem: gemini-3.1-flash-lite-image (US$ 0,0336 por imagem)
 ```
 
 Se aparecer a linha `ATENÇÃO: GEMINI_API_KEY não está definida`, o `.env` não foi lido —
@@ -123,7 +147,7 @@ confira o passo 3. Deixe rodando e, **noutro terminal**:
 
 ```bash
 curl -s localhost:8090/api/health
-# {"ok":true,"modelo":"gemini-3.1-flash-image"}
+# {"ok":true,"modelo":"gemini-3.1-flash-lite-image"}
 ```
 
 Este endereço é barato e não gasta nada. Depois pare o processo com `Ctrl+C`.

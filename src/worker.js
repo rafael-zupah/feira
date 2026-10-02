@@ -14,7 +14,7 @@
  *
  * O caminho da geração é UMA chamada só:
  *
- *   foto + estilo ──▶ gemini-3.1-flash-image ──▶ imagem do personagem
+ *   foto + estilo ──▶ gemini-3.1-flash-lite-image ──▶ imagem do personagem
  *
  * O modelo lê a foto e desenha, então a semelhança vem dele mesmo — não de um
  * texto intermediário. A foto nunca é gravada em disco, banco ou log: ela vive
@@ -24,10 +24,15 @@
 /**
  * Modelo de imagem. Ele aceita a foto como referência e preserva o rosto.
  *
- * Custo: US$ 0,067 por imagem em 1K. Não existe cota gratuita — a geração de
- * imagem saiu do tier grátis do Google em dezembro de 2025. Veja o README.
+ * É o Lite, e não o `gemini-3.1-flash-image`, por custo: US$ 0,0336 contra
+ * US$ 0,067 por imagem em 1K — metade do preço, mesma família e mesma
+ * semelhança. Para voltar atrás basta trocar esta constante: nenhum outro
+ * ponto do código depende do nome do modelo.
+ *
+ * Não existe cota gratuita — a geração de imagem saiu do tier grátis do Google
+ * em dezembro de 2025. Veja o README.
  */
-const MODELO_IMAGEM = "gemini-3.1-flash-image";
+const MODELO_IMAGEM = "gemini-3.1-flash-lite-image";
 
 /** A foto já chega reduzida pelo navegador; isto é só um teto de segurança. */
 const MAX_FOTO_BYTES = 3 * 1024 * 1024;

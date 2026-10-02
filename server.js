@@ -268,7 +268,7 @@ const servidor = createServer((req, res) => {
 
 servidor.listen(PORTA, HOST, () => {
   console.log(`Feira no ar em http://${HOST}:${PORTA}`);
-  console.log(`Modelo de imagem: gemini-3.1-flash-image (US$ 0,067 por imagem)`);
+  console.log(`Modelo de imagem: gemini-3.1-flash-lite-image (US$ 0,0336 por imagem)`);
 
   if (!env.GEMINI_API_KEY) {
     console.error(
