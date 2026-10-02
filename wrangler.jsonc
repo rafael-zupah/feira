@@ -1,0 +1,18 @@
+{
+  // Configuração do Cloudflare Worker que serve a página e a API.
+  // Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
+  "name": "feira-personagens",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-09-01",
+
+  // A Cloudflare serve tudo que está em public/ sozinha.
+  // O Worker só é acionado nas rotas /api/*, que não existem como arquivo.
+  "assets": {
+    "directory": "./public"
+  },
+
+  // Binding de IA: autentica sozinho, sem precisar de token nenhum no código.
+  "ai": {
+    "binding": "AI"
+  }
+}

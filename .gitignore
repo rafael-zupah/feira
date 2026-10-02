@@ -1,5 +1,16 @@
+# Dependências
+node_modules/
+
+# Segredos locais — a chave do Gemini NUNCA deve ser versionada
 .dev.vars
-old.html
+.env
+.env.*
+
+# Estado do wrangler
+.wrangler/
+
+# Sistema
+Thumbs.db
+desktop.ini
 .claude
-node_modules
-.wrangler
+old.html
