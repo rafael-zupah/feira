@@ -5,6 +5,7 @@
   "description": "Gerador de personagens estilizados para a feira cultural",
   "type": "module",
   "scripts": {
+    "start": "node server.js",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "tail": "wrangler tail",

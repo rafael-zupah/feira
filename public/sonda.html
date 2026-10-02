@@ -16,16 +16,22 @@
 
   <h1 class="h4">Sonda de diagnóstico</h1>
   <p class="text-secondary">
-    Esta página existe para responder três perguntas <strong>antes</strong> de confiar no app:
-    o formato de chamada do FLUX.2 klein funciona? Qual é o limite real de tamanho da foto de
-    entrada? Quanto tempo e quanta cota uma geração consome?
+    Esta página existe para responder três perguntas <strong>antes</strong> de abrir o estande:
+    a chave de produção está funcionando e com cobrança ativa? Quanto tempo uma geração leva de
+    verdade no servidor? E, se falhar, o que exatamente o Google respondeu?
   </p>
+
+  <div class="alert alert-warning small">
+    <strong>Isto gasta dinheiro.</strong> Cada teste aqui é uma geração de verdade, cobrada a
+    US$ 0,067. Use uma foto sua, não fique repetindo à toa.
+  </div>
 
   <div class="card mb-4">
     <div class="card-body">
       <h2 class="h6">1. Teste básico — só prompt, sem foto</h2>
       <p class="small text-secondary mb-2">
-        Confirma que o Worker consegue falar com o Workers AI. Se isto falhar, nada mais vai funcionar.
+        Confirma que o servidor consegue falar com o Gemini. Se isto falhar, nada mais vai
+        funcionar — e um erro 429 aqui quase sempre significa conta sem cobrança ativa.
       </p>
       <button class="btn btn-dark btn-sm" id="btn-basico">Rodar teste básico</button>
     </div>
@@ -33,10 +39,10 @@
 
   <div class="card mb-4">
     <div class="card-body">
-      <h2 class="h6">2. Teste com foto — o que importa</h2>
+      <h2 class="h6">2. Teste com uma selfie — o que importa</h2>
       <p class="small text-secondary">
-        Escolha uma selfie e vá aumentando o tamanho da foto de entrada. Quando começar a dar
-        erro, você achou o limite real do modelo.
+        É este teste que mostra se o personagem sai parecido com a pessoa. Experimente lados
+        diferentes da foto de entrada para ver o que muda na semelhança.
       </p>
 
       <div class="mb-2">
@@ -49,20 +55,12 @@
           <select id="lado" class="form-select form-select-sm">
             <option>256</option>
             <option>384</option>
-            <option selected>512</option>
-            <option>640</option>
-            <option>768</option>
-            <option>1024</option>
-          </select>
-        </div>
-        <div class="col-6 col-sm-3">
-          <label class="form-label small mb-1">Largura da saída</label>
-          <select id="largura" class="form-select form-select-sm">
             <option>512</option>
+            <option>768</option>
             <option selected>1024</option>
           </select>
         </div>
-        <div class="col-12 col-sm-4">
+        <div class="col-12 col-sm-5">
           <button class="btn btn-dark btn-sm w-100" id="btn-foto">Rodar teste com foto</button>
         </div>
       </div>
@@ -73,8 +71,10 @@
   </div>
 
   <p class="small text-secondary">
-    <a href="/">← voltar para o app</a> · Depois de concluir, acompanhe o consumo real de neurons
-    no painel da Cloudflare (Workers &amp; Pages → Workers AI).
+    <a href="/">← voltar para o app</a> · Anote o tempo que aparece em <code>ms</code>: é o
+    número que você vai dizer para o visitante na fila. O consumo do dia fica em
+    <a href="https://aistudio.google.com/" target="_blank" rel="noopener">aistudio.google.com</a>
+    → <em>Usage</em>.
   </p>
 
 </main>
@@ -102,7 +102,7 @@ function ocupado(botao, texto) {
 // --- 1. teste básico -------------------------------------------------------
 document.getElementById("btn-basico").addEventListener("click", async (e) => {
   const liberar = ocupado(e.target, "Rodando…");
-  saida.textContent = "Chamando /api/probe …";
+  saida.textContent = "Chamando /api/probe … (pode levar até 30s)";
   try {
     const r = await fetch("/api/probe");
     mostrar(await r.json());
@@ -124,8 +124,6 @@ document.getElementById("btn-foto").addEventListener("click", async (e) => {
     const blob = await reduzir(arquivo, lado);
     const form = new FormData();
     form.append("foto", blob, "foto.jpg");
-    form.append("largura", document.getElementById("largura").value);
-    form.append("altura", document.getElementById("largura").value);
 
     saida.textContent = `Enviando ${Math.round(blob.size / 1024)} KB (lado ${lado}px)…`;
     const r = await fetch("/api/probe", { method: "POST", body: form });

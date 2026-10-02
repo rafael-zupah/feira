@@ -5,6 +5,9 @@ node_modules/
 .dev.vars
 .env
 .env.*
+# ...mas o modelo do .env, esse sim, precisa ser versionado: o README manda
+# copiá-lo. Sem esta linha o ".env.*" acima o esconderia do git.
+!.env.example
 
 # Estado do wrangler
 .wrangler/

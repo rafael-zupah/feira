@@ -138,6 +138,20 @@
     }
     .btn-suave:hover { background: #fff; color: var(--ink); border-color: var(--ink); }
 
+    /* O "Tirar foto" virou o caminho único para a foto, então ele convida ao
+       toque em vez de parecer um botão secundário. */
+    .btn-foto {
+      background: #fff;
+      color: var(--ink);
+      border: 1px dashed var(--ink);
+      border-radius: 9px;
+      font-weight: 700;
+      padding: .9rem 1rem;
+      font-size: 1rem;
+    }
+    .btn-foto:hover, .btn-foto:focus-visible { background: var(--mint); border-style: solid; }
+    .btn-foto:active { transform: translateY(1px); }
+
     /* --- espera --- */
     .barra { height: 8px; background: #dce2dc; border-radius: 50px; overflow: hidden; }
     .barra > div { height: 100%; width: 0; background: var(--coral); transition: width .6s ease; }
@@ -203,32 +217,23 @@
       <div class="moldura mb-2" id="moldura">
         <div class="vazio" id="moldura-vazio">
           <span class="icone">◉</span>
-          <span>Escolha uma foto de frente,<br>com o rosto bem visível</span>
+          <span>Toque em <strong>Tirar foto</strong><br>e olhe de frente para a câmera</span>
         </div>
         <img id="previa" alt="Prévia da sua foto" hidden>
       </div>
 
-      <div class="d-flex gap-2">
-        <button type="button" class="btn-suave flex-fill" id="btn-camera">📸 Tirar foto</button>
-        <button type="button" class="btn-suave flex-fill" id="btn-galeria">🖼️ Escolher</button>
-      </div>
-
-      <!-- Dois inputs: um força a câmera frontal, o outro abre a galeria. -->
+      <!-- capture="user" abre a câmera frontal direto, sem passar pela galeria.
+           Em computador o atributo é ignorado e abre o seletor de arquivos —
+           é o que permite testar o app no PC. -->
       <input type="file" id="arquivo-camera" accept="image/*" capture="user" hidden>
-      <input type="file" id="arquivo-galeria" accept="image/*" hidden>
-    </div>
-
-    <div class="form-check mb-3">
-      <input class="form-check-input" type="checkbox" id="consentimento">
-      <label class="form-check-label aviso" for="consentimento">
-        Entendi que a minha foto é enviada para os servidores do <strong>Google</strong> e da
-        <strong>Cloudflare</strong> só para gerar a imagem. Este site não guarda a foto.
-        Na cota gratuita, o Google pode usar os dados para melhorar os modelos dele.
-      </label>
+      <button type="button" class="btn-foto w-100" id="btn-camera">📸 Tirar foto</button>
     </div>
 
     <button class="btn-acao" id="btn-gerar" disabled>Gerar meu personagem</button>
-    <p class="aviso mt-2 mb-0 text-center">Leva de 10 a 20 segundos.</p>
+    <p class="aviso mt-2 mb-0 text-center">
+      Leva de 10 a 20 segundos. A foto vai para o Google só para gerar a imagem e não
+      fica guardada aqui.
+    </p>
   </section>
 
   <!-- ======================= TELA 2: ESPERA ======================= -->

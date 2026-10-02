@@ -4,8 +4,12 @@
  */
 
 // A foto é reduzida aqui no celular antes de subir. Isso deixa o envio rápido
-// no 4G e já entrega ao modelo um arquivo dentro do limite dele.
-const LADO_MAX = 512;
+// no 4G sem entregar ao modelo uma foto maior do que ele precisa.
+//
+// 1024 e não 512: o valor antigo era o limite do FLUX.2 klein. O modelo atual
+// aceita bem mais, e é o detalhe do rosto que faz o visitante se reconhecer no
+// personagem — reduzir demais era justamente o que estragava a semelhança.
+const LADO_MAX = 1024;
 const QUALIDADE_JPEG = 0.85;
 
 const MENSAGENS_ESPERA = [
@@ -24,13 +28,11 @@ const telaErro = document.getElementById("tela-erro");
 
 const campoNome = document.getElementById("nome");
 const campoProfissao = document.getElementById("profissao");
-const consentimento = document.getElementById("consentimento");
 const btnGerar = document.getElementById("btn-gerar");
 
 const previa = document.getElementById("previa");
 const molduraVazio = document.getElementById("moldura-vazio");
 const arquivoCamera = document.getElementById("arquivo-camera");
-const arquivoGaleria = document.getElementById("arquivo-galeria");
 
 const mensagemEspera = document.getElementById("mensagem-espera");
 const progresso = document.getElementById("progresso");
@@ -62,15 +64,13 @@ function atualizarBotao() {
     campoNome.value.trim() &&
     campoProfissao.value.trim() &&
     estiloEscolhido() &&
-    fotoReduzida &&
-    consentimento.checked
+    fotoReduzida
   );
 }
 
 [campoNome, campoProfissao].forEach((campo) =>
   campo.addEventListener("input", atualizarBotao),
 );
-consentimento.addEventListener("change", atualizarBotao);
 
 // Destaca o cartão do estilo escolhido e revalida.
 const cartoesEstilo = Array.from(document.querySelectorAll(".estilo"));
@@ -92,12 +92,14 @@ marcarEstilos();
 
 // --- foto ------------------------------------------------------------------
 document.getElementById("btn-camera").addEventListener("click", () => arquivoCamera.click());
-document.getElementById("btn-galeria").addEventListener("click", () => arquivoGaleria.click());
-[arquivoCamera, arquivoGaleria].forEach((input) =>
-  input.addEventListener("change", () => {
-    if (input.files?.[0]) receberFoto(input.files[0]);
-  }),
-);
+
+arquivoCamera.addEventListener("change", () => {
+  const arquivo = arquivoCamera.files?.[0];
+  // Zera o input depois de ler. Sem isto, repetir a MESMA foto não dispara o
+  // change de novo e o botão parece não responder em quem quer refazer.
+  arquivoCamera.value = "";
+  if (arquivo) receberFoto(arquivo);
+});
 
 async function receberFoto(arquivo) {
   if (!arquivo.type.startsWith("image/")) {
@@ -205,7 +207,14 @@ async function gerar() {
     telaResultado.classList.add("entrar");
   } catch (falha) {
     console.error(falha);
-    falhar(falha.message);
+    // Quando o fetch em si falha (sem sinal, wi-fi caindo, ou o corte de 60s do
+    // Safari), o navegador joga um TypeError com mensagem em inglês — o iPhone
+    // diz só "Load failed". Traduz para algo que o visitante entenda.
+    falhar(
+      falha instanceof TypeError
+        ? "A conexão falhou. Confira o wi-fi ou os dados do celular e tente de novo."
+        : falha.message,
+    );
   } finally {
     pararMensagens();
   }
