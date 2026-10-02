@@ -1,0 +1,16 @@
+{
+  "name": "feira-personagens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gerador de personagens estilizados para a feira cultural",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail",
+    "login": "wrangler login"
+  },
+  "devDependencies": {
+    "wrangler": "4.146.0"
+  }
+}

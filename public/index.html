@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1e8">
+  <meta name="description" content="Descubra qual personagem você seria — Feira Cultural">
+  <title>Qual personagem você seria? — Feira Cultural</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --ink: #17221f;
+      --paper: #f4f1e8;
+      --coral: #ef684d;
+      --mint: #b8e6d2;
+      --blue: #6c91e8;
+      --line: rgba(23, 34, 31, .16);
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(rgba(23, 34, 31, .07) 1px, transparent 1px);
+      background-size: 18px 18px;
+      font-family: "DM Sans", sans-serif;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    h1, h2, h3, .brand, .display-font { font-family: "Space Grotesk", sans-serif; }
+    .brand { letter-spacing: -.04em; font-weight: 700; }
+    .shell { max-width: 620px; }
+
+    .eyebrow {
+      color: var(--coral);
+      letter-spacing: .16em;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, .68);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 7px 7px 0 rgba(23, 34, 31, .09);
+    }
+
+    .campo {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      padding: .8rem .9rem;
+      font-size: 1rem; /* 16px: abaixo disso o iOS dá zoom ao focar */
+      width: 100%;
+    }
+    .campo:focus {
+      outline: none;
+      border-color: var(--ink);
+      box-shadow: 0 0 0 3px var(--mint);
+    }
+    label.rotulo { font-weight: 700; font-size: .9rem; margin-bottom: .35rem; display: block; }
+
+    /* --- cartões de estilo --- */
+    .grade-estilos {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .6rem;
+    }
+    @media (min-width: 480px) { .grade-estilos { grid-template-columns: repeat(3, 1fr); } }
+
+    .estilo {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .55);
+      padding: .7rem .5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+      min-height: 92px;
+      display: grid;
+      place-content: center;
+      gap: .25rem;
+      user-select: none;
+    }
+    .estilo .icone { font-size: 1.7rem; line-height: 1; }
+    .estilo .nome { font-size: .82rem; font-weight: 500; line-height: 1.15; }
+    .estilo:hover { transform: translateY(-2px); }
+    .estilo[aria-pressed="true"] {
+      background: var(--mint);
+      border-color: var(--ink);
+      transform: translateY(-3px);
+    }
+    /* O input real fica escondido mas continua acessível pelo teclado. */
+    .estilo input { position: absolute; opacity: 0; pointer-events: none; }
+    .estilo:focus-within { box-shadow: 0 0 0 3px var(--blue); }
+
+    /* --- foto --- */
+    .moldura {
+      min-height: 190px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #d7eadd;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+    }
+    .moldura img { display: block; width: 100%; height: auto; max-height: 340px; object-fit: contain; }
+    .moldura .vazio { color: #587069; text-align: center; padding: 1.4rem 1rem; }
+    .moldura .vazio .icone { font-size: 2.4rem; display: block; margin-bottom: .4rem; }
+
+    .btn-acao {
+      background: var(--coral);
+      color: #fff;
+      border: 0;
+      border-radius: 9px;
+      font-weight: 700;
+      padding: .9rem 1.2rem;
+      font-size: 1.05rem;
+      width: 100%;
+    }
+    .btn-acao:hover:not(:disabled) { background: #d8513a; color: #fff; }
+    .btn-acao:disabled { opacity: .5; }
+
+    .btn-suave {
+      background: rgba(255, 255, 255, .7);
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      font-weight: 500;
+      padding: .7rem 1rem;
+    }
+    .btn-suave:hover { background: #fff; color: var(--ink); border-color: var(--ink); }
+
+    /* --- espera --- */
+    .barra { height: 8px; background: #dce2dc; border-radius: 50px; overflow: hidden; }
+    .barra > div { height: 100%; width: 0; background: var(--coral); transition: width .6s ease; }
+    .pulso { animation: pulso 1.6s ease-in-out infinite; }
+    @keyframes pulso { 0%, 100% { opacity: 1 } 50% { opacity: .45 } }
+
+    .resultado-img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      border: 1px solid var(--ink);
+      box-shadow: 7px 7px 0 rgba(23, 34, 31, .12);
+    }
+
+    .aviso { font-size: .8rem; color: #587069; line-height: 1.4; }
+    .erro-caixa { background: #ffd4c9; border: 1px solid var(--ink); border-radius: 10px; padding: 1rem; }
+
+    [hidden] { display: none !important; }
+    @keyframes entrar { from { opacity: 0; transform: translateY(14px) scale(.97) } to { opacity: 1; transform: none } }
+    .entrar { animation: entrar .5s cubic-bezier(.2, .8, .2, 1) both; }
+  </style>
+</head>
+<body>
+
+<main class="shell container py-4">
+
+  <header class="mb-4">
+    <div class="brand fs-5">FEIRA CULTURAL <span style="color:var(--coral)">/</span> PERSONAGENS</div>
+    <p class="eyebrow mb-2 mt-3">Traga a sua foto</p>
+    <h1 class="display-font h3 mb-0">Qual personagem você seria?</h1>
+  </header>
+
+  <!-- ======================= TELA 1: FORMULÁRIO ======================= -->
+  <section id="tela-form" class="panel p-3 p-sm-4">
+
+    <div class="mb-3">
+      <label class="rotulo" for="nome">Seu nome</label>
+      <input class="campo" id="nome" type="text" maxlength="60" autocomplete="given-name"
+             placeholder="Como podemos te chamar?">
+    </div>
+
+    <div class="mb-4">
+      <label class="rotulo" for="profissao">Sua profissão</label>
+      <input class="campo" id="profissao" type="text" maxlength="60"
+             placeholder="O que você faz?">
+    </div>
+
+    <div class="mb-4">
+      <span class="rotulo">Escolha um estilo</span>
+      <div class="grade-estilos" id="estilos" role="group" aria-label="Estilo do personagem">
+        <label class="estilo"><input type="radio" name="estilo" value="personagem"><span class="icone">🎭</span><span class="nome">Personagem</span></label>
+        <label class="estilo"><input type="radio" name="estilo" value="desenho"><span class="icone">✏️</span><span class="nome">Desenho</span></label>
+        <label class="estilo"><input type="radio" name="estilo" value="foto-realista"><span class="icone">📷</span><span class="nome">Foto realista</span></label>
+        <label class="estilo"><input type="radio" name="estilo" value="videogame"><span class="icone">🎮</span><span class="nome">Personagem de videogame</span></label>
+        <label class="estilo"><input type="radio" name="estilo" value="filme"><span class="icone">🎬</span><span class="nome">Filme</span></label>
+        <label class="estilo"><input type="radio" name="estilo" value="desenho-animado"><span class="icone">🎨</span><span class="nome">Desenho animado</span></label>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <span class="rotulo">Sua foto</span>
+      <div class="moldura mb-2" id="moldura">
+        <div class="vazio" id="moldura-vazio">
+          <span class="icone">◉</span>
+          <span>Escolha uma foto de frente,<br>com o rosto bem visível</span>
+        </div>
+        <img id="previa" alt="Prévia da sua foto" hidden>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="button" class="btn-suave flex-fill" id="btn-camera">📸 Tirar foto</button>
+        <button type="button" class="btn-suave flex-fill" id="btn-galeria">🖼️ Escolher</button>
+      </div>
+
+      <!-- Dois inputs: um força a câmera frontal, o outro abre a galeria. -->
+      <input type="file" id="arquivo-camera" accept="image/*" capture="user" hidden>
+      <input type="file" id="arquivo-galeria" accept="image/*" hidden>
+    </div>
+
+    <div class="form-check mb-3">
+      <input class="form-check-input" type="checkbox" id="consentimento">
+      <label class="form-check-label aviso" for="consentimento">
+        Entendi que a minha foto é enviada para os servidores do <strong>Google</strong> e da
+        <strong>Cloudflare</strong> só para gerar a imagem. Este site não guarda a foto.
+        Na cota gratuita, o Google pode usar os dados para melhorar os modelos dele.
+      </label>
+    </div>
+
+    <button class="btn-acao" id="btn-gerar" disabled>Gerar meu personagem</button>
+    <p class="aviso mt-2 mb-0 text-center">Leva de 10 a 20 segundos.</p>
+  </section>
+
+  <!-- ======================= TELA 2: ESPERA ======================= -->
+  <section id="tela-espera" class="panel p-4 text-center" hidden>
+    <div class="mb-3 pulso" style="font-size:2.6rem" aria-hidden="true">🎨</div>
+    <h2 class="h5 mb-1">Criando o seu personagem…</h2>
+    <p class="aviso mb-4" id="mensagem-espera" aria-live="polite">Lendo o seu rosto…</p>
+    <div class="barra mb-2"><div id="progresso"></div></div>
+    <p class="aviso mb-0">Não feche esta página.</p>
+  </section>
+
+  <!-- ======================= TELA 3: RESULTADO ======================= -->
+  <section id="tela-resultado" hidden>
+    <div class="panel p-3 p-sm-4">
+      <p class="eyebrow mb-2">Ficou pronto</p>
+      <h2 class="display-font h4 mb-3" id="titulo-resultado">Olha você aí!</h2>
+      <img class="resultado-img mb-3" id="imagem-resultado" alt="Seu personagem estilizado">
+      <a class="btn-acao d-block text-center text-decoration-none mb-2" id="btn-baixar"
+         download="meu-personagem.png">⬇️ Baixar a imagem</a>
+      <button class="btn-suave w-100" id="btn-refazer">Fazer outro personagem</button>
+      <p class="aviso mt-3 mb-0">No iPhone, se o botão de baixar não funcionar, toque e
+        segure a imagem acima e escolha “Salvar em Fotos”.</p>
+    </div>
+  </section>
+
+  <!-- ======================= TELA 4: ERRO ======================= -->
+  <section id="tela-erro" hidden>
+    <div class="erro-caixa">
+      <h2 class="h5 mb-2">Não deu certo</h2>
+      <p class="mb-3" id="mensagem-erro">Algo deu errado.</p>
+      <button class="btn-suave w-100" id="btn-voltar">Tentar de novo</button>
+    </div>
+  </section>
+
+  <footer class="text-center mt-4">
+    <p class="aviso mb-0">Protótipo da feira cultural · nenhuma foto é armazenada</p>
+  </footer>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

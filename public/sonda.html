@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sonda — Feira Personagens</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f4f1e8; font-family: system-ui, sans-serif; }
+    pre { background: #17221f; color: #b8e6d2; padding: 1rem; border-radius: 8px;
+          font-size: .8rem; white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+<main class="container py-4" style="max-width:760px">
+
+  <h1 class="h4">Sonda de diagnóstico</h1>
+  <p class="text-secondary">
+    Esta página existe para responder três perguntas <strong>antes</strong> de confiar no app:
+    o formato de chamada do FLUX.2 klein funciona? Qual é o limite real de tamanho da foto de
+    entrada? Quanto tempo e quanta cota uma geração consome?
+  </p>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h6">1. Teste básico — só prompt, sem foto</h2>
+      <p class="small text-secondary mb-2">
+        Confirma que o Worker consegue falar com o Workers AI. Se isto falhar, nada mais vai funcionar.
+      </p>
+      <button class="btn btn-dark btn-sm" id="btn-basico">Rodar teste básico</button>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h6">2. Teste com foto — o que importa</h2>
+      <p class="small text-secondary">
+        Escolha uma selfie e vá aumentando o tamanho da foto de entrada. Quando começar a dar
+        erro, você achou o limite real do modelo.
+      </p>
+
+      <div class="mb-2">
+        <input type="file" id="foto" accept="image/*" class="form-control form-control-sm">
+      </div>
+
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-6 col-sm-3">
+          <label class="form-label small mb-1">Lado da foto enviada</label>
+          <select id="lado" class="form-select form-select-sm">
+            <option>256</option>
+            <option>384</option>
+            <option selected>512</option>
+            <option>640</option>
+            <option>768</option>
+            <option>1024</option>
+          </select>
+        </div>
+        <div class="col-6 col-sm-3">
+          <label class="form-label small mb-1">Largura da saída</label>
+          <select id="largura" class="form-select form-select-sm">
+            <option>512</option>
+            <option selected>1024</option>
+          </select>
+        </div>
+        <div class="col-12 col-sm-4">
+          <button class="btn btn-dark btn-sm w-100" id="btn-foto">Rodar teste com foto</button>
+        </div>
+      </div>
+
+      <pre id="saida">Aguardando…</pre>
+      <img id="resultado" class="img-fluid border rounded mt-2" alt="" hidden>
+    </div>
+  </div>
+
+  <p class="small text-secondary">
+    <a href="/">← voltar para o app</a> · Depois de concluir, acompanhe o consumo real de neurons
+    no painel da Cloudflare (Workers &amp; Pages → Workers AI).
+  </p>
+
+</main>
+
+<script>
+const saida = document.getElementById("saida");
+const resultado = document.getElementById("resultado");
+
+function mostrar(dados) {
+  saida.textContent = JSON.stringify(dados, null, 2);
+  resultado.hidden = true;
+  if (dados.imagem) {
+    resultado.src = dados.imagem;
+    resultado.hidden = false;
+  }
+}
+
+function ocupado(botao, texto) {
+  botao.disabled = true;
+  const original = botao.textContent;
+  botao.textContent = texto;
+  return () => { botao.disabled = false; botao.textContent = original; };
+}
+
+// --- 1. teste básico -------------------------------------------------------
+document.getElementById("btn-basico").addEventListener("click", async (e) => {
+  const liberar = ocupado(e.target, "Rodando…");
+  saida.textContent = "Chamando /api/probe …";
+  try {
+    const r = await fetch("/api/probe");
+    mostrar(await r.json());
+  } catch (falha) {
+    saida.textContent = `Falha de rede: ${falha.message}`;
+  } finally {
+    liberar();
+  }
+});
+
+// --- 2. teste com foto -----------------------------------------------------
+document.getElementById("btn-foto").addEventListener("click", async (e) => {
+  const arquivo = document.getElementById("foto").files?.[0];
+  if (!arquivo) { saida.textContent = "Escolha uma selfie primeiro."; return; }
+
+  const liberar = ocupado(e.target, "Rodando…");
+  try {
+    const lado = Number(document.getElementById("lado").value);
+    const blob = await reduzir(arquivo, lado);
+    const form = new FormData();
+    form.append("foto", blob, "foto.jpg");
+    form.append("largura", document.getElementById("largura").value);
+    form.append("altura", document.getElementById("largura").value);
+
+    saida.textContent = `Enviando ${Math.round(blob.size / 1024)} KB (lado ${lado}px)…`;
+    const r = await fetch("/api/probe", { method: "POST", body: form });
+    const dados = await r.json();
+    dados.fotoEnviadaKB = Math.round(blob.size / 1024);
+    mostrar(dados);
+  } catch (falha) {
+    saida.textContent = `Falha: ${falha.message}`;
+  } finally {
+    liberar();
+  }
+});
+
+/** Reduz a imagem para o lado informado e devolve um Blob JPEG. */
+function reduzir(arquivo, lado) {
+  return new Promise((ok, falha) => {
+    const url = URL.createObjectURL(arquivo);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const escala = Math.min(1, lado / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.width * escala));
+      canvas.height = Math.max(1, Math.round(img.height * escala));
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((b) => b ? ok(b) : falha(new Error("toBlob devolveu vazio")), "image/jpeg", 0.85);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); falha(new Error("não consegui ler a imagem")); };
+    img.src = url;
+  });
+}
+</script>
+</body>
+</html>
