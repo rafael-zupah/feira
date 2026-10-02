@@ -49,10 +49,14 @@ let fotoReduzida = null;
 
 /**
  * A legenda que vai junto da imagem compartilhada.
- * É também a assinatura do evento, por isso vive numa constante só.
+ *
+ * O endereço vem de window.location.origin, e não escrito à mão: assim o link
+ * que circula é sempre o do domínio por onde a pessoa entrou. Se um dia a feira
+ * sair do staging para o domínio definitivo, nada aqui precisa mudar.
  */
 const MENSAGEM_COMPARTILHAR =
-  "Feira Cultural Instituto Americana, como a IA está revolucionando o nosso dia.";
+  "Feira Cultural Instituto Americana, como a IA está revolucionando o nosso dia.\n\n" +
+  window.location.origin;
 
 // --- telas -----------------------------------------------------------------
 function mostrarTela(tela) {
@@ -97,15 +101,39 @@ document.querySelectorAll('input[name="estilo"]').forEach((radio) => {
 marcarEstilos();
 
 // --- foto ------------------------------------------------------------------
-document.getElementById("btn-camera").addEventListener("click", () => arquivoCamera.click());
+// A moldura inteira abre a câmera. Como ela é uma <div> e não um <button>,
+// o role/tabindex vêm do HTML e o teclado é tratado aqui: sem isto, quem navega
+// por teclado (ou leitor de tela) não teria como tirar a foto.
+const moldura = document.getElementById("moldura");
+const molduraTrocar = document.getElementById("moldura-trocar");
+
+function abrirCamera() {
+  arquivoCamera.click();
+}
+
+moldura.addEventListener("click", abrirCamera);
+
+moldura.addEventListener("keydown", (evento) => {
+  if (evento.key === "Enter" || evento.key === " ") {
+    evento.preventDefault();
+    abrirCamera();
+  }
+});
 
 arquivoCamera.addEventListener("change", () => {
   const arquivo = arquivoCamera.files?.[0];
   // Zera o input depois de ler. Sem isto, repetir a MESMA foto não dispara o
-  // change de novo e o botão parece não responder em quem quer refazer.
+  // change de novo e a moldura parece não responder em quem quer refazer.
   arquivoCamera.value = "";
   if (arquivo) receberFoto(arquivo);
 });
+
+/** Liga e desliga o estado "já tem foto" da moldura. */
+function mostrarPrevia(temFoto) {
+  previa.hidden = !temFoto;
+  molduraVazio.hidden = temFoto;
+  molduraTrocar.hidden = !temFoto;
+}
 
 async function receberFoto(arquivo) {
   if (!arquivo.type.startsWith("image/")) {
@@ -114,8 +142,7 @@ async function receberFoto(arquivo) {
   try {
     fotoReduzida = await reduzirFoto(arquivo);
     previa.src = fotoReduzida;
-    previa.hidden = false;
-    molduraVazio.hidden = true;
+    mostrarPrevia(true);
     atualizarBotao();
   } catch (falha) {
     console.error(falha);
@@ -327,11 +354,10 @@ document.getElementById("btn-refazer").addEventListener("click", () => {
   // Mantém nome e profissão (a pessoa provavelmente quer só tentar outro
   // estilo), mas limpa a foto e o estilo para forçar uma escolha nova.
   fotoReduzida = null;
-  previa.hidden = true;
   // removeAttribute e não src = "": atribuir string vazia faz alguns
   // navegadores pedirem a própria página como se fosse imagem.
   previa.removeAttribute("src");
-  molduraVazio.hidden = false;
+  mostrarPrevia(false);
   document.querySelectorAll('input[name="estilo"]').forEach((radio) => {
     radio.checked = false;
   });

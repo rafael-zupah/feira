@@ -303,15 +303,25 @@ mesma; o que muda é quem serve a página.
 - A foto é reduzida para 1024px no celular antes de subir (`LADO_MAX` em `public/app.js`).
   O valor anterior era 512, que era o limite do modelo antigo — e era justamente o que
   estragava a semelhança.
-- O botão "Tirar foto" usa `capture="user"`, que abre a câmera frontal direto no celular,
-  sem passar pela galeria. **Em computador o atributo é ignorado** e o navegador abre o
-  seletor de arquivos — é assim que dá para testar o app no PC.
+- A moldura da foto **é o botão**: o próprio lugar onde a foto vai aparecer abre a
+  câmera. Não existe botão separado de "Tirar foto" — isso encurta o formulário e deixa
+  o "Gerar meu personagem" mais visível. Como é uma `<div>` e não um `<button>`, ela
+  carrega `role="button"`, `tabindex="0"` e tratamento de Enter/Espaço no `app.js`,
+  senão quem navega por teclado não conseguiria tirar foto.
+- O input usa `capture="user"`, que abre a câmera frontal direto no celular, sem passar
+  pela galeria. **Em computador o atributo é ignorado** e o navegador abre o seletor de
+  arquivos — é assim que dá para testar o app no PC.
+- Com a foto já tirada, um selo escuro "Toque para trocar a foto" aparece sobre a
+  prévia. Sem ele ninguém descobre que a moldura continua clicável.
 - O compartilhamento usa a **Web Share API com arquivo** (`navigator.share({files})`).
   Isso importa: um link `wa.me` sozinho carrega **apenas texto** e nunca anexa a imagem.
   Onde não há suporte (computador, navegador antigo), o app cai para o `wa.me` com a
   legenda e avisa na tela que a imagem precisa ser anexada na mão.
   Vale saber que **o WhatsApp costuma descartar o texto quando recebe um arquivo** — a
   legenda aparece ou não dependendo da versão do app. A imagem em si sempre vai.
+- A legenda do compartilhamento inclui o endereço do site, tirado de
+  `window.location.origin`. Fica dinâmico de propósito: quando a feira sair do staging
+  para o domínio definitivo, o link que circula se atualiza sozinho, sem mexer no código.
 - A extensão do arquivo baixado vem do `mimeType` que o servidor devolveu. Fixar `.png`
   no código, como era antes, gerava um arquivo `.png` que por dentro era JPEG.
 - Uma imagem 1K consome ~1.120 tokens de saída. O `maxOutputTokens` é 8192; um valor

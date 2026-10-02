@@ -112,6 +112,7 @@
 
     /* --- foto --- */
     .moldura {
+      position: relative;
       min-height: 190px;
       display: grid;
       place-items: center;
@@ -119,10 +120,44 @@
       background: #d7eadd;
       border: 1px dashed var(--line);
       border-radius: 10px;
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease;
     }
+    .moldura:hover, .moldura:focus-visible {
+      background: #c9e3d2;
+      border-color: var(--ink);
+      border-style: solid;
+    }
+    .moldura:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
     .moldura img { display: block; width: 100%; height: auto; max-height: 340px; object-fit: contain; }
-    .moldura .vazio { color: #587069; text-align: center; padding: 1.4rem 1rem; }
+    .moldura .vazio {
+      color: #587069;
+      text-align: center;
+      padding: 1.4rem 1rem;
+      display: grid;
+      gap: .25rem;
+    }
     .moldura .vazio .icone { font-size: 2.4rem; display: block; margin-bottom: .4rem; }
+    .vazio-titulo { color: var(--ink); font-weight: 700; font-size: 1.02rem; }
+    .vazio-dica { font-size: .8rem; }
+
+    /* Selo sobre a prévia. Sem ele, quem já tirou a foto não descobre que a
+       moldura continua clicável para trocar. pointer-events: none para o toque
+       atravessar e chegar na moldura. */
+    .trocar {
+      position: absolute;
+      left: 50%;
+      bottom: .6rem;
+      transform: translateX(-50%);
+      background: rgba(23, 34, 31, .84);
+      color: #fff;
+      font-size: .74rem;
+      font-weight: 600;
+      padding: .3rem .75rem;
+      border-radius: 50px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
 
     .btn-acao {
       background: var(--coral);
@@ -151,20 +186,6 @@
       padding: .7rem 1rem;
     }
     .btn-suave:hover { background: #fff; color: var(--ink); border-color: var(--ink); }
-
-    /* O "Tirar foto" virou o caminho único para a foto, então ele convida ao
-       toque em vez de parecer um botão secundário. */
-    .btn-foto {
-      background: #fff;
-      color: var(--ink);
-      border: 1px dashed var(--ink);
-      border-radius: 9px;
-      font-weight: 700;
-      padding: .9rem 1rem;
-      font-size: 1rem;
-    }
-    .btn-foto:hover, .btn-foto:focus-visible { background: var(--mint); border-style: solid; }
-    .btn-foto:active { transform: translateY(1px); }
 
     /* --- espera --- */
     .barra { height: 8px; background: #dce2dc; border-radius: 50px; overflow: hidden; }
@@ -226,21 +247,27 @@
       </div>
     </div>
 
-    <div class="mb-3">
+    <div class="mb-4">
       <span class="rotulo">Sua foto</span>
-      <div class="moldura mb-2" id="moldura">
+      <!-- A moldura inteira é o botão. Em vez de um botão separado embaixo, o
+           próprio lugar onde a foto vai aparecer é que abre a câmera: encurta o
+           formulário e deixa o "Gerar meu personagem" mais visível.
+           Como é uma <div>, precisa de role/tabindex aqui e do teclado no JS. -->
+      <div class="moldura" id="moldura" role="button" tabindex="0"
+           aria-label="Tirar a sua foto com a câmera">
         <div class="vazio" id="moldura-vazio">
-          <span class="icone">◉</span>
-          <span>Toque em <strong>Tirar foto</strong><br>e olhe de frente para a câmera</span>
+          <span class="icone">📸</span>
+          <span class="vazio-titulo">Toque para tirar a foto</span>
+          <span class="vazio-dica">Olhe de frente, com o rosto bem visível</span>
         </div>
         <img id="previa" alt="Prévia da sua foto" hidden>
+        <span class="trocar" id="moldura-trocar" hidden>Toque para trocar a foto</span>
       </div>
 
       <!-- capture="user" abre a câmera frontal direto, sem passar pela galeria.
            Em computador o atributo é ignorado e abre o seletor de arquivos —
            é o que permite testar o app no PC. -->
       <input type="file" id="arquivo-camera" accept="image/*" capture="user" hidden>
-      <button type="button" class="btn-foto w-100" id="btn-camera">📸 Tirar foto</button>
     </div>
 
     <button class="btn-acao" id="btn-gerar" disabled>Gerar meu personagem</button>
